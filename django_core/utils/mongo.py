@@ -30,11 +30,11 @@ db = client[MONGO_DB_NAME]
 try:
     client.admin.command("ping")
 
-    print("\n✅ MongoDB Atlas Connection Successful\n")
+    print("\n[OK] MongoDB Atlas Connection Successful\n")
 
 except Exception as e:
 
-    print("\n❌ MongoDB Connection Failed\n")
+    print("\n[ERROR] MongoDB Connection Failed\n")
     print(e)
 
 # --------------------------------------------------
@@ -42,3 +42,9 @@ except Exception as e:
 # --------------------------------------------------
 
 timelines_collection = db["timelines"]
+branches_collection = db["branches"]
+events_collection = db["events"]
+simulations_collection = db["simulations"]
+ai_summaries_collection = db["ai_summaries"]
+replays_collection = db["replays"]
+users_collection = db["users"]

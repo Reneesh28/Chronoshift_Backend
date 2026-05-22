@@ -11,6 +11,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import RegisterSerializer
+from utils.mongo import users_collection
 
 
 # --------------------------------------------------
@@ -40,6 +41,21 @@ def register_user(request):
     if serializer.is_valid():
 
         user = serializer.save()
+
+        # --------------------------------------------------
+        # STORE IN MONGODB
+        # --------------------------------------------------
+        try:
+            users_collection.insert_one({
+                "username": user.username,
+                "email": user.email,
+                "password_hash": user.password,
+            })
+        except Exception as e:
+            user.delete()
+            return Response({
+                "error": f"Failed to persist user profile in MongoDB Atlas: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         refresh = RefreshToken.for_user(user)
 
