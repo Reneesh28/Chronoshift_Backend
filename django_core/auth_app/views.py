@@ -14,10 +14,7 @@ from .serializers import RegisterSerializer
 from utils.mongo import users_collection
 
 
-# --------------------------------------------------
 # HEALTH CHECK
-# --------------------------------------------------
-
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def health_check(request):
@@ -28,10 +25,7 @@ def health_check(request):
     })
 
 
-# --------------------------------------------------
 # REGISTER
-# --------------------------------------------------
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_user(request):
@@ -42,9 +36,7 @@ def register_user(request):
 
         user = serializer.save()
 
-        # --------------------------------------------------
         # STORE IN MONGODB
-        # --------------------------------------------------
         try:
             users_collection.insert_one({
                 "username": user.username,
@@ -72,9 +64,7 @@ def register_user(request):
             }
         }, status=status.HTTP_201_CREATED)
 
-        # --------------------------------------------------
         # HTTP-ONLY REFRESH COOKIE
-        # --------------------------------------------------
 
         response.set_cookie(
             key="refresh_token",
@@ -93,9 +83,7 @@ def register_user(request):
     )
 
 
-# --------------------------------------------------
 # LOGIN
-# --------------------------------------------------
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -134,9 +122,7 @@ def login_user(request):
         }
     })
 
-    # --------------------------------------------------
     # HTTP-ONLY REFRESH COOKIE
-    # --------------------------------------------------
 
     response.set_cookie(
         key="refresh_token",
@@ -172,10 +158,7 @@ def refresh_access_token(request):
         user_id = old_refresh["user_id"]
 
         user = User.objects.get(id=user_id)
-
-        # --------------------------------------------------
         # ROTATE TOKENS
-        # --------------------------------------------------
 
         new_refresh = RefreshToken.for_user(user)
 
@@ -186,9 +169,7 @@ def refresh_access_token(request):
             "access_token": new_access_token
         })
 
-        # --------------------------------------------------
         # SET NEW REFRESH COOKIE
-        # --------------------------------------------------
 
         response.set_cookie(
             key="refresh_token",
@@ -208,10 +189,7 @@ def refresh_access_token(request):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# --------------------------------------------------
 # LOGOUT
-# --------------------------------------------------
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_user(request):
@@ -225,9 +203,7 @@ def logout_user(request):
     return response
 
 
-# --------------------------------------------------
 # PROFILE
-# --------------------------------------------------
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

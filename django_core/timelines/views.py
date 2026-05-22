@@ -11,6 +11,8 @@ from rest_framework.permissions import (
 
 from rest_framework.response import Response
 from rest_framework import status
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .serializers import TimelineSerializer
 
@@ -181,3 +183,61 @@ def delete_timeline(request, timeline_id):
     return Response({
         "message": "Timeline deleted successfully"
     })
+
+
+# --------------------------------------------------
+# INTERNAL WEBSOCKET BROADCAST BRIDGE
+# --------------------------------------------------
+
+@api_view(["POST"])
+@permission_classes([])  # Open to internal microservices
+def broadcast_event_view(request):
+    """
+    Internal REST bridge allowing external microservice processes (FastAPI, Flask)
+    to broadcast JSON payloads to timeline WebSocket channels.
+    """
+    data = request.data or {}
+    timeline_id = data.get("timeline_id")
+    
+    if not timeline_id:
+        return Response({
+            "error": True,
+            "message": "Missing 'timeline_id' parameter.",
+            "code": "MISSING_TIMELINE_ID"
+        }, status=status.HTTP_400_BAD_REQUEST)
+        
+    payload = data.get("payload", {})
+    if not payload:
+        return Response({
+            "error": True,
+            "message": "Missing 'payload' parameter.",
+            "code": "MISSING_PAYLOAD"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Resolve channel layer
+    channel_layer = get_channel_layer()
+    if not channel_layer:
+        return Response({
+            "error": True,
+            "message": "WebSocket channel layer is not configured.",
+            "code": "CHANNELS_UNCONFIGURED"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    group_name = f"timeline_{timeline_id}"
+    
+    # Send message to the consumer group asynchronously in a synchronous environment
+    async_to_sync(channel_layer.group_send)(
+        group_name,
+        {
+            "type": "timeline.message",
+            "data": payload
+        }
+    )
+
+    print(f"[BROADCAST API] Dispatched event '{payload.get('event')}' to group '{group_name}'")
+
+    return Response({
+        "status": "broadcasted",
+        "timeline_id": timeline_id,
+        "payload": payload
+    }, status=status.HTTP_200_OK)

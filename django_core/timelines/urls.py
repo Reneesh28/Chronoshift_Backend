@@ -7,10 +7,12 @@ from .views import (
     timeline_detail,
     update_timeline,
     delete_timeline,
+    broadcast_event_view,
 )
 
 urlpatterns = [
     path("health/", health_check),
+    path("broadcast/", broadcast_event_view),
 
     # CREATE + LIST
     path("create/", create_timeline),

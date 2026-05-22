@@ -8,9 +8,7 @@ from services import generate_timeline_summary
 # 1. Initialize Flask blueprint
 ai_blueprint = Blueprint("ai", __name__, url_prefix="/ai")
 
-# ==========================================================
 # HEALTH / SERVICE STATUS CHECK
-# ==========================================================
 @ai_blueprint.route("/health", methods=["GET"])
 def health_check():
     """
@@ -21,9 +19,7 @@ def health_check():
         "status": "running"
     }), 200
 
-# ==========================================================
 # GENERATE SUMMARY ENDPOINT
-# ==========================================================
 @ai_blueprint.route("/generate-summary", methods=["POST"])
 def post_generate_summary():
     """
@@ -81,9 +77,7 @@ def post_generate_summary():
             "code": "AI_ENGINE_ERROR"
         }), 500
 
-# ==========================================================
 # RETRIEVE SUMMARY ENDPOINT
-# ==========================================================
 @ai_blueprint.route("/summary/<summary_id>", methods=["GET"])
 def get_summary(summary_id):
     """

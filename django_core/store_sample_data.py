@@ -47,9 +47,7 @@ def store_sample_data():
     # We will delete other collections' items later based on timeline_id if created
     print("[OK] DB cleanup complete.\n")
 
-    # ==========================================================
     # APP 1: auth_app (User Sync)
-    # ==========================================================
     print("--- [APP 1: auth_app] Syncing User Auth ---")
     # A. Save in SQLite
     user = User.objects.create_user(
@@ -69,9 +67,7 @@ def store_sample_data():
     print(f"    * Username: {user.username}")
     print(f"    * Email: {user.email}\n")
 
-    # ==========================================================
     # APP 2: timelines (Timeline Creation)
-    # ==========================================================
     print("--- [APP 2: timelines] Creating Timelines ---")
     timeline_payload = {
         "user_id": user.id,
@@ -84,10 +80,7 @@ def store_sample_data():
     print(f"|-- [SUCCESS] Saved Timeline in MongoDB Atlas timelines collection.")
     print(f"    * Timeline ID: {timeline_id_str}")
     print(f"    * Title: {timeline_payload['title']}\n")
-
-    # ==========================================================
     # APP 3: branches (Branches, Events, Simulations, AI Summaries)
-    # ==========================================================
     print("--- [APP 3: branches] Creating Branching Logic & Simulation Placeholders ---")
     
     # A. Root Branch
@@ -170,9 +163,7 @@ def store_sample_data():
     ai_id_str = str(ai_result.inserted_id)
     print(f"|-- [SUCCESS] Saved AI Summary Narrative (ID: {ai_id_str})\n")
 
-    # ==========================================================
     # APP 4: replay (Replay Sequences)
-    # ==========================================================
     print("--- [APP 4: replay] Creating Playback Replay Sessions ---")
     replay_data = {
         "timeline_id": timeline_id_str,
@@ -185,10 +176,7 @@ def store_sample_data():
     replay_result = replays_collection.insert_one(replay_data)
     replay_id_str = str(replay_result.inserted_id)
     print(f"|-- [SUCCESS] Initialized Replay Playback Session (ID: {replay_id_str})\n")
-
-    # ==========================================================
     # REPORT SUMMARY
-    # ==========================================================
     print("==========================================================")
     print("[SUMMARY] Developer Sample Seed Operations Completed Successfully")
     print("==========================================================")

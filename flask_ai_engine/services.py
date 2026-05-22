@@ -13,6 +13,26 @@ from config import (
     MODEL_NAME
 )
 
+def emit_websocket_event(timeline_id: str, payload: dict):
+    """
+    Issues a synchronous HTTP POST request to Django's WebSocket broadcast bridge
+    to relay AI events to the React client in real-time.
+    """
+    url = "http://localhost:8000/api/timelines/broadcast/"
+    try:
+        response = requests.post(
+            url,
+            json={
+                "timeline_id": timeline_id,
+                "payload": payload
+            },
+            timeout=2.0
+        )
+        if response.status_code != 200:
+            print(f"[WS AI EMITTER WARNING] Django broadcast returned status {response.status_code}: {response.text}")
+    except Exception as e:
+        print(f"[WS AI EMITTER ERROR] Failed to emit WebSocket event: {e}")
+
 def get_fallback_summary(decision: str, divergence_score: float, depth_level: int, branch_name: str) -> str:
     """
     Generates a high-precision, futuristic fallback summary when the external Hugging Face LLM is unavailable.
@@ -139,17 +159,14 @@ def generate_timeline_summary(timeline_id: str, branch_id: str, simulation_id: s
     except Exception as e:
         print(f"[AI WARNING] Could not retrieve prior summaries: {e}")
 
-    # ==========================================================
     # HEURISTIC CALCULATIONS
-    # ==========================================================
+
     # Risk climbs with divergence score and timeline branch depth
     risk_score = round(min(1.0, max(0.0, (divergence_score * 0.7) + (depth_level * 0.05))), 2)
     # Confidence drops with higher divergence and higher depth (uncertainty escalates)
     confidence_score = round(min(1.0, max(0.0, 1.0 - (divergence_score * 0.4) - (depth_level * 0.03))), 2)
 
-    # ==========================================================
     # LANGCHAIN PROMPT ORCHESTRATION
-    # ==========================================================
     template = """Instruct: You are ChronoShift's narrative intelligence explanation system.
 Analyze the following parallel timeline data and generate a strategic, analytical 1-to-2 sentence future state summary.
 Do not use conversational filler. Do not repeat the prompt. Avoid generic introductions.
@@ -267,6 +284,15 @@ Output: """
         res = ai_summaries_collection.insert_one(summary_doc)
         summary_id = str(res.inserted_id)
         print(f"[DATABASE] Persisted new AI summary document: '{summary_id}'")
+
+    # Emit ai_summary_ready event to timeline WebSocket group
+    emit_websocket_event(timeline_id, {
+        "event": "ai_summary_ready",
+        "summary_id": summary_id,
+        "branch_id": branch_id,
+        "risk_score": risk_score,
+        "confidence_score": confidence_score
+    })
 
     return {
         "summary_id": summary_id,

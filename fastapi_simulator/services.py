@@ -3,11 +3,33 @@ import asyncio
 import random
 from datetime import datetime
 from bson import ObjectId
+import httpx
 from config import (
     simulations_collection,
     branches_collection,
     timelines_collection
 )
+
+async def emit_websocket_event(timeline_id: str, payload: dict):
+    """
+    Issues a non-blocking asynchronous HTTP POST request to Django's WebSocket
+    broadcast bridge to relay events to the React client in real-time.
+    """
+    url = "http://localhost:8000/api/timelines/broadcast/"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url,
+                json={
+                    "timeline_id": timeline_id,
+                    "payload": payload
+                },
+                timeout=2.0
+            )
+            if response.status_code != 200:
+                print(f"[WS EMITTER WARNING] Django broadcast returned status {response.status_code}: {response.text}")
+    except Exception as e:
+        print(f"[WS EMITTER ERROR] Failed to emit WebSocket event over bridge: {e}")
 
 async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: str, decision: str):
     """
@@ -35,12 +57,12 @@ async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: s
         )
         
         # Emit initial processing event
-        print(json.dumps({
+        await emit_websocket_event(timeline_id, {
             "event": "simulation_updated",
             "simulation_id": simulation_id,
             "progress": 0,
             "status": "processing"
-        }))
+        })
         
         # Step 2: Simulate dynamic progressive increments (20%, 40%, 60%, 80%)
         for prog in [20, 40, 60, 80]:
@@ -51,12 +73,12 @@ async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: s
                 {"$set": {"progress": prog}}
             )
             
-            print(json.dumps({
+            await emit_websocket_event(timeline_id, {
                 "event": "simulation_updated",
                 "simulation_id": simulation_id,
                 "progress": prog,
                 "status": "processing"
-            }))
+            })
             
         # Step 3: Fetch parent branch details to determine depth level
         parent_depth = 1
@@ -103,34 +125,34 @@ async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: s
         
         # Step 5: Emit WebSocket-compliant JSON outputs for branch creations
         timestamp_str = datetime.utcnow().isoformat() + "Z"
-        print(json.dumps({
+        await emit_websocket_event(timeline_id, {
             "event": "branch_created",
             "timeline_id": timeline_id,
             "branch_id": br1_id,
             "parent_branch_id": branch_id,
             "divergence_score": div1,
             "timestamp": timestamp_str
-        }))
-        print(json.dumps({
+        })
+        await emit_websocket_event(timeline_id, {
             "event": "branch_created",
             "timeline_id": timeline_id,
             "branch_id": br2_id,
             "parent_branch_id": branch_id,
             "divergence_score": div2,
             "timestamp": timestamp_str
-        }))
+        })
         
         # Emit divergence changed events
-        print(json.dumps({
+        await emit_websocket_event(timeline_id, {
             "event": "divergence_changed",
             "branch_id": br1_id,
             "divergence_score": div1
-        }))
-        print(json.dumps({
+        })
+        await emit_websocket_event(timeline_id, {
             "event": "divergence_changed",
             "branch_id": br2_id,
             "divergence_score": div2
-        }))
+        })
         
         # Step 6: Finalize Simulation Record in DB
         simulations_collection.update_one(
@@ -147,17 +169,17 @@ async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: s
         )
         
         # Emit simulation completed events
-        print(json.dumps({
+        await emit_websocket_event(timeline_id, {
             "event": "simulation_updated",
             "simulation_id": simulation_id,
             "progress": 100,
             "status": "completed"
-        }))
-        print(json.dumps({
+        })
+        await emit_websocket_event(timeline_id, {
             "event": "simulation_completed",
             "simulation_id": simulation_id,
             "generated_branches": [br1_id, br2_id]
-        }))
+        })
         
         print(f"[SIMULATION COMPLETED] Simulation {simulation_id} resolved successfully.")
         

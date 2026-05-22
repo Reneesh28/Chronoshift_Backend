@@ -201,9 +201,7 @@ def run_ai_e2e_verification():
             server_process.kill()
             print("[WARNING] Flask background process forced killed.")
 
-    print("==========================================================")
     print("[SUCCESS] All Phase 5 AI Engine Verification Checks Completed!")
-    print("==========================================================\n")
 
 if __name__ == "__main__":
     run_ai_e2e_verification()

@@ -20,10 +20,7 @@ from services import run_simulation_task
 
 router = APIRouter(prefix="/simulate", tags=["Simulation"])
 
-# ==========================================================
 # HEALTH CHECK
-# ==========================================================
-
 @router.get("/health", response_model=dict)
 def health_check():
     """
@@ -34,10 +31,7 @@ def health_check():
         "status": "running"
     }
 
-# ==========================================================
 # START SIMULATION
-# ==========================================================
-
 @router.post("/run", response_model=SimulationRunResponse, status_code=status.HTTP_202_ACCEPTED)
 def run_simulation(request: SimulationRunRequest, background_tasks: BackgroundTasks):
     """
@@ -118,9 +112,7 @@ def run_simulation(request: SimulationRunRequest, background_tasks: BackgroundTa
         status="simulation_started"
     )
 
-# ==========================================================
 # GET SIMULATION STATUS
-# ==========================================================
 
 @router.get("/status/{simulation_id}", response_model=SimulationStatusResponse)
 def get_simulation_status(simulation_id: str):
@@ -156,9 +148,7 @@ def get_simulation_status(simulation_id: str):
         progress=sim.get("progress", 0)
     )
 
-# ==========================================================
 # GET SIMULATION RESULT
-# ==========================================================
 
 @router.get("/result/{simulation_id}", response_model=SimulationResultResponse)
 def get_simulation_result(simulation_id: str):

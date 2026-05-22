@@ -14,20 +14,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from routes import router
 
-# ==========================================================
 # FASTAPI APP INSTANTIATION
-# ==========================================================
-
 app = FastAPI(
     title="ChronoShift Realtime Simulation Engine",
     description="Asynchronous distributed engine responsible for parallel futures branching and divergence calculations.",
     version="1.0.0"
 )
 
-# ==========================================================
 # CORS MIDDLWARE CONFIGURATION
-# ==========================================================
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Permits all origins for simplified MVP local dev integrations
@@ -36,10 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==========================================================
 # GLOBAL CUSTOM EXCEPTION HANDLERS
-# ==========================================================
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
@@ -92,9 +83,7 @@ async def global_generic_exception_handler(request: Request, exc: Exception):
         }
     )
 
-# ==========================================================
 # MOUNT BLUEPRINTS & ROOT ROUTES
-# ==========================================================
 
 app.include_router(router)
 

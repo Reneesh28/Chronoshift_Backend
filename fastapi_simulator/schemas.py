@@ -1,18 +1,14 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict
 
-# ==========================================================
 # REQUEST SCHEMAS
-# ==========================================================
 
 class SimulationRunRequest(BaseModel):
     timeline_id: str = Field(..., description="The ObjectId string of the root timeline")
     branch_id: str = Field(..., description="The ObjectId string of the starting parent branch")
     decision: str = Field(..., description="The decision text to base the simulation on")
 
-# ==========================================================
 # RESPONSE SCHEMAS
-# ==========================================================
 
 class SimulationRunResponse(BaseModel):
     simulation_id: str = Field(..., description="The ObjectId string of the created simulation record")
@@ -28,9 +24,7 @@ class SimulationResultResponse(BaseModel):
     generated_branches: List[str] = Field(..., description="List of generated branch ObjectId strings")
     divergence_scores: Dict[str, float] = Field(..., description="Divergence scores mapped by branch ObjectId")
 
-# ==========================================================
 # ERROR SCHEMAS
-# ==========================================================
 
 class ErrorResponse(BaseModel):
     error: bool = Field(True, description="Indicates if an error occurred")
