@@ -1,41 +1,44 @@
-# --------------------------------------------------
-# ENV
-# --------------------------------------------------
-
-.env
-.env.*
+from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
 
 # --------------------------------------------------
-# PYTHON
+# LOAD ENV VARIABLES
 # --------------------------------------------------
 
-__pycache__/
-*.py[cod]
-*.sqlite3
+load_dotenv()
+
+MONGODB_URI = os.getenv("MONGODB_URI")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
 
 # --------------------------------------------------
-# VENV
+# CREATE CLIENT
 # --------------------------------------------------
 
-env/
-venv/
+client = MongoClient(MONGODB_URI)
 
 # --------------------------------------------------
-# IDE
+# DATABASE
 # --------------------------------------------------
 
-.vscode/
-.idea/
+db = client[MONGO_DB_NAME]
 
 # --------------------------------------------------
-# OS FILES
+# TEST CONNECTION
 # --------------------------------------------------
 
-.DS_Store
-Thumbs.db
+try:
+    client.admin.command("ping")
+
+    print("\n✅ MongoDB Atlas Connection Successful\n")
+
+except Exception as e:
+
+    print("\n❌ MongoDB Connection Failed\n")
+    print(e)
 
 # --------------------------------------------------
-# LOGS
+# COLLECTIONS
 # --------------------------------------------------
 
-*.log
+timelines_collection = db["timelines"]
