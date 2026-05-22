@@ -16,7 +16,7 @@ from asgiref.sync import async_to_sync
 
 from .serializers import TimelineSerializer
 
-from utils.mongo import timelines_collection
+from utils.mongo import timelines_collection, branches_collection
 
 
 # --------------------------------------------------
@@ -87,10 +87,6 @@ def list_timelines(request):
     })
 
 
-# --------------------------------------------------
-# TIMELINE DETAIL
-# --------------------------------------------------
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def timeline_detail(request, timeline_id):
@@ -108,8 +104,17 @@ def timeline_detail(request, timeline_id):
 
     timeline["_id"] = str(timeline["_id"])
 
+    # Fetch associated branches
+    branches = list(branches_collection.find({"timeline_id": timeline_id}))
+    for b in branches:
+        b["_id"] = str(b["_id"])
+        b["id"] = b["_id"]
+
     return Response({
-        "timeline": timeline
+        "timeline": timeline,
+        "branches": branches,
+        "id": timeline["_id"],
+        **timeline
     })
 
 # --------------------------------------------------

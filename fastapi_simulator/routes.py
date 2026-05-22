@@ -40,16 +40,29 @@ def run_simulation(request: SimulationRunRequest, background_tasks: BackgroundTa
     try:
         # Validate inputs formats
         timeline_id_obj = ObjectId(request.timeline_id)
-        branch_id_obj = ObjectId(request.branch_id)
     except InvalidId:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "error": True,
-                "message": "Invalid timeline_id or branch_id format",
+                "message": "Invalid timeline_id format",
                 "code": "INVALID_REQUEST"
             }
         )
+
+    branch_id_obj = None
+    if request.branch_id != "root":
+        try:
+            branch_id_obj = ObjectId(request.branch_id)
+        except InvalidId:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "error": True,
+                    "message": "Invalid branch_id format",
+                    "code": "INVALID_REQUEST"
+                }
+            )
 
     # Verify that timeline and parent branch exist before launching
     timeline = timelines_collection.find_one({"_id": timeline_id_obj})
@@ -63,16 +76,17 @@ def run_simulation(request: SimulationRunRequest, background_tasks: BackgroundTa
             }
         )
 
-    parent_branch = branches_collection.find_one({"_id": branch_id_obj})
-    if not parent_branch:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "error": True,
-                "message": "Parent branch not found",
-                "code": "BRANCH_NOT_FOUND"
-            }
-        )
+    if branch_id_obj:
+        parent_branch = branches_collection.find_one({"_id": branch_id_obj})
+        if not parent_branch:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={
+                    "error": True,
+                    "message": "Parent branch not found",
+                    "code": "BRANCH_NOT_FOUND"
+                }
+            )
 
     # Check for existing "queued" simulation placeholder for this timeline/branch
     existing_sim = simulations_collection.find_one({

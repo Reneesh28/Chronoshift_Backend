@@ -10,6 +10,7 @@ from .views import (
 urlpatterns = [
     path("health/", health_check),
     path("", create_branch),
+    path("create/", create_branch),
     path("compare/", compare_branches),
     path("events/", inject_decision_event),
     path("<str:branch_id>/", get_branch_details),

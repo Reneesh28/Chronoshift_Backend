@@ -112,23 +112,50 @@ def generate_timeline_summary(timeline_id: str, branch_id: str, simulation_id: s
     # Validate IDs
     try:
         t_id_obj = ObjectId(timeline_id)
-        b_id_obj = ObjectId(branch_id)
-        s_id_obj = ObjectId(simulation_id)
     except Exception as e:
-        print(f"[AI ERROR] Invalid ObjectId format passed: {e}")
-        raise ValueError("Invalid timeline_id, branch_id, or simulation_id format")
+        print(f"[AI ERROR] Invalid timeline ObjectId format: {e}")
+        raise ValueError("Invalid timeline_id format")
+
+    b_id_obj = None
+    if branch_id != 'root':
+        try:
+            b_id_obj = ObjectId(branch_id)
+        except Exception as e:
+            print(f"[AI ERROR] Invalid branch ObjectId format: {e}")
+            raise ValueError("Invalid branch_id format")
+
+    s_id_obj = None
+    if simulation_id and simulation_id != 'default':
+        try:
+            s_id_obj = ObjectId(simulation_id)
+        except Exception as e:
+            print(f"[AI ERROR] Invalid simulation ObjectId format: {e}")
+            # We don't raise here, we will just treat simulation as missing / default
+            pass
 
     # Fetch context documents
     timeline = timelines_collection.find_one({"_id": t_id_obj})
-    branch = branches_collection.find_one({"_id": b_id_obj})
-    simulation = simulations_collection.find_one({"_id": s_id_obj})
+    
+    if branch_id == 'root':
+        branch = {
+            "branch_name": "Main Root Core",
+            "decision_trigger": "Initial timeline setup parameters.",
+            "divergence_score": 0.0,
+            "depth_level": 1,
+            "parent_branch_id": None
+        }
+    else:
+        branch = branches_collection.find_one({"_id": b_id_obj})
+
+    if s_id_obj:
+        simulation = simulations_collection.find_one({"_id": s_id_obj})
+    else:
+        simulation = None
 
     if not timeline:
         raise FileNotFoundError(f"Timeline not found: {timeline_id}")
     if not branch:
         raise FileNotFoundError(f"Branch not found: {branch_id}")
-    if not simulation:
-        raise FileNotFoundError(f"Simulation not found: {simulation_id}")
 
     # Extract dynamic inputs
     timeline_title = timeline.get("title", "Unnamed Timeline")

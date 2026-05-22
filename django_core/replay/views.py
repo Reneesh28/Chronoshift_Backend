@@ -44,10 +44,19 @@ def start_replay(request):
         result = replays_collection.insert_one(replay_data)
         replay_id_str = str(result.inserted_id)
 
+        # Serialize resolved events to return immediately
+        resolved_events = []
+        for ev in events:
+            ev["_id"] = str(ev["_id"])
+            if ev.get("timestamp") and isinstance(ev["timestamp"], datetime):
+                ev["timestamp"] = ev["timestamp"].isoformat()
+            resolved_events.append(ev)
+
         return Response({
             "replay_id": replay_id_str,
             "status": "replay_started",
-            "event_count": len(event_sequence)
+            "event_count": len(event_sequence),
+            "events": resolved_events
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -85,5 +94,35 @@ def get_replay_status(request, replay_id):
             "current_step": current_step,
             "total_steps": len(event_sequence)
         })
+    except Exception:
+        return Response({"error": "Invalid replay_id format"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_replay_details(request, replay_id):
+    try:
+        replay = replays_collection.find_one({"_id": ObjectId(replay_id)})
+        if not replay:
+            return Response({"error": "Replay session not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        event_ids = replay.get("event_sequence", [])
+        resolved_events = []
+        for ev_id in event_ids:
+            try:
+                ev = events_collection.find_one({"_id": ObjectId(ev_id)})
+                if ev:
+                    ev["_id"] = str(ev["_id"])
+                    if ev.get("timestamp") and isinstance(ev["timestamp"], datetime):
+                        ev["timestamp"] = ev["timestamp"].isoformat()
+                    resolved_events.append(ev)
+            except Exception:
+                continue
+
+        replay["_id"] = str(replay["_id"])
+        if replay.get("started_at") and isinstance(replay["started_at"], datetime):
+            replay["started_at"] = replay["started_at"].isoformat()
+        
+        replay["events"] = resolved_events
+        return Response(replay)
     except Exception:
         return Response({"error": "Invalid replay_id format"}, status=status.HTTP_400_BAD_REQUEST)

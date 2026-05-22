@@ -185,15 +185,19 @@ def compare_branches(request):
                 if not branch:
                     continue
                 
-                # Try to get corresponding risk score from AI summaries if any exists
+                # Try to get corresponding risk, confidence, and narrative summary from AI summaries if any exists
                 ai_summary = ai_summaries_collection.find_one({"branch_id": bid})
                 risk_score = ai_summary.get("risk_score", 0.5) if ai_summary else 0.5
+                confidence_score = ai_summary.get("confidence_score", 0.7) if ai_summary else 0.7
+                summary = ai_summary.get("summary", "No AI summary calculated yet.") if ai_summary else "No AI summary calculated yet."
 
                 comparison_results.append({
                     "branch_id": bid,
                     "branch_name": branch.get("branch_name", ""),
                     "divergence_score": branch.get("divergence_score", 0.0),
-                    "risk_score": risk_score
+                    "risk_score": risk_score,
+                    "confidence_score": confidence_score,
+                    "summary": summary
                 })
             except Exception:
                 continue
