@@ -52,7 +52,16 @@ def post_generate_summary():
         return jsonify({
             "summary_id": result["summary_id"],
             "risk_score": result["risk_score"],
-            "summary": result["summary"]
+            "summary": result["summary"],
+            "confidence_score": result.get("confidence_score"),
+            "branch_type": result.get("branch_type"),
+            "future_outlook": result.get("future_outlook"),
+            "risk_analysis": result.get("risk_analysis"),
+            "opportunity_analysis": result.get("opportunity_analysis"),
+            "timeline_stability": result.get("timeline_stability"),
+            "divergence_reason": result.get("divergence_reason"),
+            "strategic_outlook": result.get("strategic_outlook"),
+            "event_evolution": result.get("event_evolution", [])
         }), 200
 
     except ValueError as err:
@@ -77,7 +86,7 @@ def post_generate_summary():
             "code": "AI_ENGINE_ERROR"
         }), 500
 
-# RETRIEVE SUMMARY ENDPOINT
+# RETRIEVE SUMMARY BY SUMMARY ID
 @ai_blueprint.route("/summary/<summary_id>", methods=["GET"])
 def get_summary(summary_id):
     """
@@ -100,9 +109,45 @@ def get_summary(summary_id):
         }), 404
 
     # 2. Map payload structure to exact API Contract specification
-    return jsonify({
-        "summary_id": str(summary_doc["_id"]),
-        "branch_id": summary_doc.get("branch_id"),
-        "risk_score": summary_doc.get("risk_score"),
-        "summary": summary_doc.get("summary")
-    }), 200
+    return jsonify(_serialize_summary(summary_doc)), 200
+
+
+# RETRIEVE SUMMARY BY BRANCH ID
+@ai_blueprint.route("/summary/branch/<branch_id>", methods=["GET"])
+def get_summary_by_branch(branch_id):
+    """
+    Retrieves a pre-calculated AI summary narrative by the target branch ID.
+    This allows the frontend to fetch cached reports when a user selects a node.
+    Exposes: GET /ai/summary/branch/{branch_id}
+    """
+    summary_doc = ai_summaries_collection.find_one({"branch_id": branch_id})
+
+    if not summary_doc:
+        return jsonify({
+            "error": True,
+            "message": "No AI summary found for this branch.",
+            "code": "SUMMARY_NOT_FOUND"
+        }), 404
+
+    return jsonify(_serialize_summary(summary_doc)), 200
+
+
+def _serialize_summary(doc: dict) -> dict:
+    """
+    Transforms a MongoDB AI summary document into a clean JSON-serializable response dict.
+    """
+    return {
+        "summary_id": str(doc["_id"]),
+        "branch_id": doc.get("branch_id"),
+        "risk_score": doc.get("risk_score"),
+        "confidence_score": doc.get("confidence_score"),
+        "summary": doc.get("summary"),
+        "branch_type": doc.get("branch_type"),
+        "future_outlook": doc.get("future_outlook"),
+        "risk_analysis": doc.get("risk_analysis"),
+        "opportunity_analysis": doc.get("opportunity_analysis"),
+        "timeline_stability": doc.get("timeline_stability"),
+        "divergence_reason": doc.get("divergence_reason"),
+        "strategic_outlook": doc.get("strategic_outlook"),
+        "event_evolution": doc.get("event_evolution", [])
+    }

@@ -272,8 +272,8 @@ async def test_full_system_integration():
             # Assert progress starts near 0 and reaches 100
             assert update_events[0].get("progress") == 0, "Initial progress is not 0%"
             assert update_events[-1].get("progress") == 100, "Final progress is not 100%"
-            assert len(branch_created_events) == 2, "Expected exactly 2 branch_created events!"
-            assert len(div_events) == 2, "Expected exactly 2 divergence_changed events!"
+            assert len(branch_created_events) == 3, "Expected exactly 3 branch_created events!"
+            assert len(div_events) == 3, "Expected exactly 3 divergence_changed events!"
             assert len(completed_events) == 1, "Expected exactly 1 simulation_completed event!"
             print("[ASSERTION] [SUCCESS] All simulation events are structurally flawless.")
 
@@ -302,7 +302,7 @@ async def test_full_system_integration():
             timeout_limit = 5.0
             start_time = time.time()
             
-            while ai_packets_captured < 2:
+            while ai_packets_captured < 3:
                 if time.time() - start_time > timeout_limit:
                     raise TimeoutError("Timed out waiting for AI narrative WebSocket packets")
                 

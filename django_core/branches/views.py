@@ -194,10 +194,18 @@ def compare_branches(request):
                 comparison_results.append({
                     "branch_id": bid,
                     "branch_name": branch.get("branch_name", ""),
+                    "branch_type": branch.get("branch_type") or (ai_summary.get("branch_type") if ai_summary else None),
                     "divergence_score": branch.get("divergence_score", 0.0),
                     "risk_score": risk_score,
                     "confidence_score": confidence_score,
-                    "summary": summary
+                    "summary": summary,
+                    "future_outlook": ai_summary.get("future_outlook") if ai_summary else None,
+                    "risk_analysis": ai_summary.get("risk_analysis") if ai_summary else None,
+                    "opportunity_analysis": ai_summary.get("opportunity_analysis") if ai_summary else None,
+                    "timeline_stability": ai_summary.get("timeline_stability") if ai_summary else None,
+                    "divergence_reason": ai_summary.get("divergence_reason") if ai_summary else None,
+                    "strategic_outlook": ai_summary.get("strategic_outlook") if ai_summary else None,
+                    "event_evolution": ai_summary.get("event_evolution", []) if ai_summary else [],
                 })
             except Exception:
                 continue
