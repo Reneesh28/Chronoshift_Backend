@@ -59,6 +59,12 @@ async def test_full_system_integration():
     # 3. Setup direct MongoDB Atlas connection
     print("[INIT] Connecting to MongoDB Atlas cluster...")
     try:
+        try:
+            import dns.resolver
+            dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
+            dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
+        except Exception as dns_err:
+            pass
         mongo_client = MongoClient(mongo_uri)
         db = mongo_client[db_name]
         timelines_col = db["timelines"]
@@ -237,7 +243,7 @@ async def test_full_system_integration():
             
             # Read streaming packets until simulation_completed is received
             simulation_completed_received = False
-            timeout_limit = 12.0
+            timeout_limit = 30.0
             start_time = time.time()
             
             while not simulation_completed_received:
@@ -299,7 +305,7 @@ async def test_full_system_integration():
             # 11. Listen to WebSocket for AI real-time event packets
             print("\n[STREAM] Capturing AI real-time broadcast packets from WebSocket...")
             ai_packets_captured = 0
-            timeout_limit = 5.0
+            timeout_limit = 20.0
             start_time = time.time()
             
             while ai_packets_captured < 3:

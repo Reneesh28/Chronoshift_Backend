@@ -7,8 +7,31 @@ import httpx
 from config import (
     simulations_collection,
     branches_collection,
-    timelines_collection
+    timelines_collection,
+    DJANGO_URL,
+    AI_ENGINE_URL
 )
+
+
+async def _post_json_with_retries(url: str, payload: dict, timeout: float, attempts: int = 3) -> httpx.Response:
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, timeout=timeout)
+                response.raise_for_status()
+                return response
+        except httpx.HTTPStatusError as exc:
+            body = exc.response.text[:500]
+            raise RuntimeError(
+                f"HTTP {exc.response.status_code} from {url}: {body}"
+            ) from exc
+        except httpx.RequestError as exc:
+            last_error = exc
+            if attempt < attempts:
+                await asyncio.sleep(0.5 * attempt)
+
+    raise RuntimeError(f"Request to {url} failed after {attempts} attempts: {last_error}") from last_error
 
 # ==========================================================
 # BRANCH ARCHETYPE DEFINITIONS
@@ -50,21 +73,18 @@ async def emit_websocket_event(timeline_id: str, payload: dict):
     Issues a non-blocking asynchronous HTTP POST request to Django's WebSocket
     broadcast bridge to relay events to the React client in real-time.
     """
-    url = "http://localhost:8000/api/timelines/broadcast/"
+    url = f"{DJANGO_URL.rstrip('/')}/api/timelines/broadcast/"
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                url,
-                json={
-                    "timeline_id": timeline_id,
-                    "payload": payload
-                },
-                timeout=2.0
-            )
-            if response.status_code != 200:
-                print(f"[WS EMITTER WARNING] Django broadcast returned status {response.status_code}: {response.text}")
-    except Exception as e:
-        print(f"[WS EMITTER ERROR] Failed to emit WebSocket event over bridge: {e}")
+        await _post_json_with_retries(
+            url,
+            {
+                "timeline_id": timeline_id,
+                "payload": payload
+            },
+            timeout=2.0
+        )
+    except Exception as err:
+        print(f"[WS EMITTER ERROR] Failed to emit WebSocket event over bridge: {err}")
 
 
 async def trigger_ai_summary(timeline_id: str, branch_id: str, simulation_id: str):
@@ -73,24 +93,20 @@ async def trigger_ai_summary(timeline_id: str, branch_id: str, simulation_id: st
     a full timeline report for a specific branch. This runs in background
     so the user sees reports immediately when they click a node.
     """
-    url = "http://localhost:8003/ai/generate-summary"
+    url = f"{AI_ENGINE_URL.rstrip('/')}/ai/generate-summary"
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                url,
-                json={
-                    "timeline_id": timeline_id,
-                    "branch_id": branch_id,
-                    "simulation_id": simulation_id
-                },
-                timeout=15.0
-            )
-            if response.status_code == 200:
-                print(f"[AI TRIGGER] Summary pre-generated for branch {branch_id}")
-            else:
-                print(f"[AI TRIGGER WARNING] Flask AI returned {response.status_code}: {response.text}")
-    except Exception as e:
-        print(f"[AI TRIGGER ERROR] Could not reach Flask AI Engine for branch {branch_id}: {e}")
+        await _post_json_with_retries(
+            url,
+            {
+                "timeline_id": timeline_id,
+                "branch_id": branch_id,
+                "simulation_id": simulation_id
+            },
+            timeout=15.0
+        )
+        print(f"[AI TRIGGER] Summary pre-generated for branch {branch_id}")
+    except Exception as err:
+        print(f"[AI TRIGGER ERROR] Could not reach Flask AI Engine for branch {branch_id}: {err}")
 
 
 async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: str, decision: str):
@@ -219,6 +235,7 @@ async def run_simulation_task(simulation_id: str, timeline_id: str, branch_id: s
             "progress": 100,
             "status": "completed"
         })
+        await asyncio.sleep(0.2)
         await emit_websocket_event(timeline_id, {
             "event": "simulation_completed",
             "simulation_id": simulation_id,

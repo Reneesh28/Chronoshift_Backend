@@ -13,7 +13,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # LOAD ENV VARIABLES
 # --------------------------------------------------
 
-load_dotenv(BASE_DIR.parent / ".env")
+_env_path = BASE_DIR.parent / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
 
 # --------------------------------------------------
 # SECURITY
@@ -21,9 +23,16 @@ load_dotenv(BASE_DIR.parent / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1,django_core"
+    ).split(",")
+    if host.strip()
+]
 
 # --------------------------------------------------
 # INSTALLED APPS
@@ -168,6 +177,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+# Support dynamic origins in production/Render environments
+_cors_env = os.getenv("CORS_ALLOWED_ORIGIN")
+if _cors_env:
+    CORS_ALLOWED_ORIGINS.append(_cors_env)
 
 # --------------------------------------------------
 # SIMPLE JWT CONFIGURATION

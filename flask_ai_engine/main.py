@@ -58,6 +58,7 @@ app = create_app()
 if __name__ == "__main__":
     # Deploy local service on port 8003
     port = int(os.getenv("AI_PORT", 8003))
+    debug = os.getenv("DEBUG", "False") == "True"
     print(f"\n[BOOT] Initializing ChronoShift Flask AI Microservice...")
-    print(f"[BOOT] Server listening on: http://127.0.0.1:{port}")
-    app.run(host="127.0.0.1", port=port, debug=True)
+    print(f"[BOOT] Server listening on: http://0.0.0.0:{port}")
+    app.run(host="0.0.0.0", port=port, debug=debug)

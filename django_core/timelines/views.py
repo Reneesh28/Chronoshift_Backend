@@ -24,6 +24,7 @@ from utils.mongo import timelines_collection, branches_collection
 # --------------------------------------------------
 
 @api_view(["GET"])
+@permission_classes([])
 def health_check(request):
 
     return Response({

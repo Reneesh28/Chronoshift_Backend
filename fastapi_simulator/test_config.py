@@ -40,6 +40,12 @@ def run_diagnostics():
 
     # 3. Test MongoDB Connectivity
     try:
+        try:
+            import dns.resolver
+            dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
+            dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
+        except Exception as dns_err:
+            pass
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
         # Force a call to test connection
         client.admin.command("ping")

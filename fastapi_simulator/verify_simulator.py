@@ -31,6 +31,12 @@ def run_e2e_verification():
     # 2. Setup direct Mongo connection for seeding & assertion verification
     print("[*] Connecting to MongoDB Atlas cluster...")
     try:
+        try:
+            import dns.resolver
+            dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
+            dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
+        except Exception as dns_err:
+            pass
         client = MongoClient(mongo_uri)
         db = client[db_name]
         timelines_col = db["timelines"]

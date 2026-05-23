@@ -1,0 +1,8 @@
+gunicorn
+flask
+langchain
+langchain-core
+flask-cors
+pymongo
+requests
+python-dotenv

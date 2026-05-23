@@ -15,6 +15,14 @@ MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
 # CREATE CLIENT
 # --------------------------------------------------
 
+# Override DNS resolver for MongoDB Atlas SRV connection in restricted environments
+try:
+    import dns.resolver
+    dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
+    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
+except Exception as dns_err:
+    print(f"[CONFIG WARNING] Failed to override default DNS resolver: {dns_err}")
+
 client = MongoClient(MONGODB_URI)
 
 # --------------------------------------------------
