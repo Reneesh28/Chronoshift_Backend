@@ -217,7 +217,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 
     # Future Vercel Frontend
-    "https://chronoshift.vercel.app",
+    "https://chronoshift-frontend-nine.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -251,7 +251,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 
     # Future Vercel Frontend
-    "https://chronoshift.vercel.app",
+    "https://chronoshift-frontend-nine.vercel.app",
 ]
 
 # --------------------------------------------------
