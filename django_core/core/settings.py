@@ -173,15 +173,6 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-# Support dynamic origins in production/Render environments
-_cors_env = os.getenv("CORS_ALLOWED_ORIGIN")
-if _cors_env:
-    CORS_ALLOWED_ORIGINS.append(_cors_env)
 
 # --------------------------------------------------
 # SIMPLE JWT CONFIGURATION
