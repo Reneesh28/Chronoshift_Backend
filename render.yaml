@@ -1,45 +1,38 @@
-# ChronoShift Render Deployment Blueprint (Backend Unified Services)
-# ----------------------------------------------------------------------------------
-# HOW TO DEPLOY ON RENDER:
-# 1. Push this project to GitHub so that GitHub Actions compiles and publishes the
-#    Docker image to GitHub Container Registry (GHCR).
-# 2. Make your GHCR package PUBLIC (or configure private registry access on Render).
-# 3. Replace 'your-github-username' with your actual lowercase GitHub username/org.
-# 4. In Render Dashboard, click "New +" -> "Blueprint".
-# 5. Link your GitHub repository.
-# 6. Under "Blueprint Spec Path" in the Render deployment settings, enter:
-#    chronoshift-backend/render.yaml
-# 7. Click deploy!
-# ----------------------------------------------------------------------------------
-
 services:
-  # Unified Monolith Backend Container (Django, FastAPI & Flask managed by Supervisor)
   - type: web
     name: chronoshift-backend
-    env: image
+
+    runtime: image
+
     image:
-      url: ghcr.io/your-github-username/chronoshift/backend:latest
+      url: ghcr.io/reneesh28/chronoshift_backend/backend:latest
+
     plan: free
+
     envVars:
-      - key: PORT
-        value: "8000" # Target exposed Daphne ASGI gateway port
       - key: MONGODB_URI
-        sync: false # Set in Render Dashboard (e.g. mongodb+srv://...)
+        sync: false
+
       - key: MONGO_DB_NAME
         value: Chronoshift
-      - key: HF_TOKEN
-        sync: false # Set in Render Dashboard (Hugging Face User Access Token)
-      - key: AI_REMOTE_ENABLED
-        value: "False" # Set to True only when HF_TOKEN and outbound inference are configured
+
       - key: SECRET_KEY
-        generateValue: true # Automatically generates a cryptographically secure key
+        generateValue: true
+
       - key: DEBUG
         value: "False"
+
       - key: ALLOWED_HOSTS
-        sync: false # Set to your Render backend host plus any custom backend domains
+        value: ".onrender.com"
+
       - key: CORS_ALLOWED_ORIGIN
-        sync: false # Input your frontend URL here (e.g. https://your-frontend.onrender.com)
+        value: "*"
+
+      - key: AI_REMOTE_ENABLED
+        value: "False"
+
       - key: SIMULATOR_URL
-        value: http://127.0.0.1:8002
+        value: "http://127.0.0.1:8002"
+
       - key: AI_ENGINE_URL
-        value: http://127.0.0.1:8003
+        value: "http://127.0.0.1:8003"
