@@ -1,6 +1,10 @@
 from django.contrib.auth.models import User
+from django.conf import settings
 
 from rest_framework.decorators import api_view, permission_classes
+
+JWT_COOKIE_SECURE = getattr(settings, "JWT_COOKIE_SECURE", False)
+JWT_COOKIE_SAMESITE = getattr(settings, "JWT_COOKIE_SAMESITE", "Lax")
 from rest_framework.permissions import (
     IsAuthenticated,
     AllowAny,
@@ -70,8 +74,8 @@ def register_user(request):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,  # True in production HTTPS
-            samesite="Lax",
+            secure=JWT_COOKIE_SECURE,
+            samesite=JWT_COOKIE_SAMESITE,
             max_age=7 * 24 * 60 * 60,
         )
 
@@ -128,8 +132,8 @@ def login_user(request):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,  # True in production HTTPS
-        samesite="Lax",
+        secure=JWT_COOKIE_SECURE,
+        samesite=JWT_COOKIE_SAMESITE,
         max_age=7 * 24 * 60 * 60,
     )
 
@@ -175,8 +179,8 @@ def refresh_access_token(request):
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=False,  # True in production HTTPS
-            samesite="Lax",
+            secure=JWT_COOKIE_SECURE,
+            samesite=JWT_COOKIE_SAMESITE,
             max_age=7 * 24 * 60 * 60,
         )
 
