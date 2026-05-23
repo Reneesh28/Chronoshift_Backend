@@ -27,4 +27,4 @@ COPY . .
 EXPOSE 8000
 
 # Start Supervisor to orchestrate Django, FastAPI, and Flask
-CMD ["supervisord", "-c", "/app/supervisord.conf"]
+CMD ["sh", "-c", "cd /app/django_core && python manage.py migrate && supervisord -c /app/supervisord.conf"]
